@@ -51,7 +51,7 @@ def most_frequent_color(image_path):
             # 将颜色值写入 Excel 单元格
             cell_format = workbook.add_format(
                 {'bg_color': color})
-            worksheet.write(row_index + 1, i, color, cell_format)
+            worksheet.write(row_index, i, color, cell_format)
     workbook.close()
     return res
 
@@ -90,16 +90,31 @@ def traverse_directory_os(directory):
             flat_color = [c for sub_list in color_dict for c in sub_list]
 
             # 遍历图片的每个像素点
-            for row in range(height):
-                for col in range(width):
-                    pass
-                    # 获取像素点颜色
-                    # color = pixels[col, row]
-                    # result, position = closest_color((color[0], color[1], color[2]), flat_color)
-                    # cell_format = workbook.add_format(
-                    #     {'bg_color': rgb_to_hex((result[0], result[1], result[2]))})
-                    # worksheet.write(row, col, str(position), cell_format)
-
+            # 定义块大小，例如 10x10 的像素块
+            BLOCK_SIZE = 10
+            # 遍历图片的行，按块处理
+            for block_row in range(0, height, BLOCK_SIZE):
+                for block_col in range(0, width, BLOCK_SIZE):
+                    # 用于统计块内颜色信息，这里以计算平均颜色为例
+                    r_sum, g_sum, b_sum = 0, 0, 0
+                    num_pixels = 0
+                    # 遍历块内的每个像素
+                    for row in range(block_row, min(block_row + BLOCK_SIZE, height)):
+                        for col in range(block_col, min(block_col + BLOCK_SIZE, width)):
+                            color = pixels[col, row]
+                            r_sum += color[0]
+                            g_sum += color[1]
+                            b_sum += color[2]
+                            num_pixels += 1
+                    # 计算块内平均颜色
+                    avg_color = (r_sum // num_pixels, g_sum // num_pixels, b_sum // num_pixels)
+                    result, position = closest_color(avg_color, flat_color)
+                    cell_format = workbook.add_format(
+                        {'bg_color': rgb_to_hex((result[0], result[1], result[2]))})
+                    # 将块对应的单元格区域一次性写入 Excel，这里假设使用的是 xlsxwriter 库，
+                    # 根据块的起始行列坐标和块大小来确定写入区域
+                    worksheet.write_row(block_row // BLOCK_SIZE, block_col // BLOCK_SIZE,
+                                        [str(position)] * BLOCK_SIZE * BLOCK_SIZE, cell_format)
             workbook.close()
 
 def main():
