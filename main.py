@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageFile
 import xlsxwriter
 import os
 from collections import Counter
@@ -10,29 +10,45 @@ import math
 # from colour import RGB_to_Lab
 import numpy
 
+
 def patch_asscalar(a):
     return a.item()
 
+
 setattr(numpy, "asscalar", patch_asscalar)
 color_dict = [
-    [(99, 170, 171), (130, 192, 206), (126, 187, 217), (163, 191, 218), (185, 193, 220), (152, 176, 214), (225, 141, 174), (226, 153, 183), (238, 187, 189), (183, 154, 186), (185, 174, 212), (163, 153, 202)],
-    [(59, 181, 170), (76, 173, 218), (60, 167, 206), (74, 171, 208), (110, 144, 211), (151, 167, 213), (230, 59, 106), (212, 66, 112), (222, 103, 135), (214, 97, 171), (169, 112, 170), (124, 102, 171)],
-    [(39, 161, 178), (33, 149, 174), (36, 136, 192), (62, 131, 188), (48, 116, 187), (98, 128, 182), (208, 60, 112), (190, 31, 86), (145, 56, 123), (152, 45, 128), (131, 63, 158), (125, 89, 152)],
-    [(63, 160, 145), (49, 141, 146), (56, 111, 183), (65, 112, 199), (49, 88, 157), (76, 114, 151), (171, 62, 95), (163, 59, 105), (135, 68, 134), (125, 74, 143), (100, 74, 134), (70, 66, 123)],
-    [(194, 215, 217), (188, 220, 195), (185, 212, 186), (212, 203, 69), (169, 151, 121), (168, 149, 131), (235, 222, 111), (232, 207, 128), (241, 186, 115), (245, 147, 94), (237, 137, 132), (241, 100, 108)],
-    [(89, 187, 126), (169, 213, 129), (186, 213, 107), (188, 188, 22), (156, 94, 67), (150, 94, 75), (235, 197, 76), (249, 182, 69), (247, 150, 52), (248, 115, 91), (245, 69, 67), (233, 72, 71)],
-    [(54, 155, 74), (42, 186, 50), (88, 180, 29), (155, 184, 30), (115, 74, 52), (104, 74, 72), (238, 185, 74), (250, 128, 56), (244, 98, 40), (204, 48, 41), (206, 71, 89), (146, 58, 55)],
-    [(48, 75, 67), (31, 93, 79), (37, 116, 76), (124, 137, 54), (83, 83, 62), (105, 84, 83), (219, 161, 75), (245, 97, 61), (225, 51, 56), (200, 45, 56), (171, 40, 56), (126, 55, 67)],
-    [(220, 184, 177), (233, 182, 166), (239, 193, 165), (239, 207, 187), (236, 234, 227), (234, 232, 228), (218, 195, 190), (216, 197, 164), (222, 207, 158), (193, 170, 145), (203, 178, 151), (195, 185, 175)],
-    [(231, 159, 124), (218, 150, 103), (236, 170, 116), (244, 194, 138), (240, 218, 173), (226, 215, 193), (185, 173, 176), (151, 147, 129), (187, 152, 99), (173, 119, 85), (156, 133, 112), (160, 159, 154)],
-    [(209, 122, 67), (208, 116, 55), (213, 154, 93), (152, 117, 88), (136, 129, 123), (130, 124, 117), (138, 114, 118), (94, 100, 81), (177, 124, 73), (156, 86, 62), (140, 111, 96), (145, 136, 129)],
-    [(127, 85, 67), (90, 63, 58), (91, 71, 65), (77, 72, 73), (58, 56, 58), (73, 70, 71), (127, 97, 115), (66, 74, 79), (161, 95, 54), (161, 77, 65), (121, 91, 85), (104, 100, 100)]
+    [(99, 170, 171), (130, 192, 206), (126, 187, 217), (163, 191, 218), (185, 193, 220), (152, 176, 214),
+     (225, 141, 174), (226, 153, 183), (238, 187, 189), (183, 154, 186), (185, 174, 212), (163, 153, 202)],
+    [(59, 181, 170), (76, 173, 218), (60, 167, 206), (74, 171, 208), (110, 144, 211), (151, 167, 213), (230, 59, 106),
+     (212, 66, 112), (222, 103, 135), (214, 97, 171), (169, 112, 170), (124, 102, 171)],
+    [(39, 161, 178), (33, 149, 174), (36, 136, 192), (62, 131, 188), (48, 116, 187), (98, 128, 182), (208, 60, 112),
+     (190, 31, 86), (145, 56, 123), (152, 45, 128), (131, 63, 158), (125, 89, 152)],
+    [(63, 160, 145), (49, 141, 146), (56, 111, 183), (65, 112, 199), (49, 88, 157), (76, 114, 151), (171, 62, 95),
+     (163, 59, 105), (135, 68, 134), (125, 74, 143), (100, 74, 134), (70, 66, 123)],
+    [(194, 215, 217), (188, 220, 195), (185, 212, 186), (212, 203, 69), (169, 151, 121), (168, 149, 131),
+     (235, 222, 111), (232, 207, 128), (241, 186, 115), (245, 147, 94), (237, 137, 132), (241, 100, 108)],
+    [(89, 187, 126), (169, 213, 129), (186, 213, 107), (188, 188, 22), (156, 94, 67), (150, 94, 75), (235, 197, 76),
+     (249, 182, 69), (247, 150, 52), (248, 115, 91), (245, 69, 67), (233, 72, 71)],
+    [(54, 155, 74), (42, 186, 50), (88, 180, 29), (155, 184, 30), (115, 74, 52), (104, 74, 72), (238, 185, 74),
+     (250, 128, 56), (244, 98, 40), (204, 48, 41), (206, 71, 89), (146, 58, 55)],
+    [(48, 75, 67), (31, 93, 79), (37, 116, 76), (124, 137, 54), (83, 83, 62), (105, 84, 83), (219, 161, 75),
+     (245, 97, 61), (225, 51, 56), (200, 45, 56), (171, 40, 56), (126, 55, 67)],
+    [(220, 184, 177), (233, 182, 166), (239, 193, 165), (239, 207, 187), (236, 234, 227), (234, 232, 228),
+     (218, 195, 190), (216, 197, 164), (222, 207, 158), (193, 170, 145), (203, 178, 151), (195, 185, 175)],
+    [(231, 159, 124), (218, 150, 103), (236, 170, 116), (244, 194, 138), (240, 218, 173), (226, 215, 193),
+     (185, 173, 176), (151, 147, 129), (187, 152, 99), (173, 119, 85), (156, 133, 112), (160, 159, 154)],
+    [(209, 122, 67), (208, 116, 55), (213, 154, 93), (152, 117, 88), (136, 129, 123), (130, 124, 117), (138, 114, 118),
+     (94, 100, 81), (177, 124, 73), (156, 86, 62), (140, 111, 96), (145, 136, 129)],
+    [(127, 85, 67), (90, 63, 58), (91, 71, 65), (77, 72, 73), (58, 56, 58), (73, 70, 71), (127, 97, 115), (66, 74, 79),
+     (161, 95, 54), (161, 77, 65), (121, 91, 85), (104, 100, 100)]
 ]
+flat_color = [c for sub_list in color_dict for c in sub_list]
 
 
 def rgb_to_hex(rgb):
     r, g, b = rgb
     return "#{:02x}{:02x}{:02x}".format(r, g, b)
+
 
 def most_frequent_color(image_path):
     global color_dict
@@ -125,6 +141,45 @@ def find_closest_color_ciede2000(target_color, color_array):
     closest_color_position = color_array.index(closest_color)
     return closest_color, [closest_color_position // 12, closest_color_position % 12]
 
+
+def generate_color_excel(img: ImageFile, file_name: str):
+    pixels = img.load()
+    width, height = img.size
+
+    # 创建 Excel 文件
+    workbook = xlsxwriter.Workbook(file_name + '.xlsx')
+    worksheet = workbook.add_worksheet()
+
+    # 遍历图片的每个像素点
+    # 定义块大小，例如 10x10 的像素块
+    BLOCK_SIZE = 24
+    # 遍历图片的行，按块处理
+    for block_row in range(0, height, BLOCK_SIZE):
+        for block_col in range(0, width, BLOCK_SIZE):
+            # 用于统计块内颜色信息，这里以计算平均颜色为例
+            r_sum, g_sum, b_sum = 0, 0, 0
+            num_pixels = 0
+            # 遍历块内的每个像素
+            for row in range(block_row, min(block_row + BLOCK_SIZE, height)):
+                for col in range(block_col, min(block_col + BLOCK_SIZE, width)):
+                    color = pixels[col, row]
+                    r_sum += color[0]
+                    g_sum += color[1]
+                    b_sum += color[2]
+                    num_pixels += 1
+            # 计算块内平均颜色
+            avg_color = (r_sum // num_pixels, g_sum // num_pixels, b_sum // num_pixels)
+            # result, position = closest_color(avg_color, flat_color)
+            result, position = find_closest_color_ciede2000(avg_color, flat_color)
+            cell_format = workbook.add_format(
+                {'bg_color': rgb_to_hex((result[0], result[1], result[2]))})
+            # 将块对应的单元格区域一次性写入 Excel，这里假设使用的是 xlsxwriter 库，
+            # 根据块的起始行列坐标和块大小来确定写入区域
+            # worksheet.write_row(block_row // BLOCK_SIZE, block_col // BLOCK_SIZE,
+            #                     [str(position)] * BLOCK_SIZE * BLOCK_SIZE, cell_format)
+    workbook.close()
+
+
 def traverse_directory_os(directory):
     for root, dirs, files in os.walk(directory):
         print(f"Current directory: {root}")
@@ -134,48 +189,67 @@ def traverse_directory_os(directory):
             file_path = os.path.join(root, file_name)
             # 打开图片
             img = Image.open(file_path)
-            pixels = img.load()
-            width, height = img.size
+            generate_color_excel(img, file_name)
 
+
+def traverse_directory_os2(directory):
+    for root, dirs, files in os.walk(directory):
+        print(f"Current directory: {root}")
+
+        for file_name in files:
+            print(f"File: {file_name}")
+            file_path = os.path.join(root, file_name)
+            # 打开图片
+            img = Image.open(file_path)
+            pixels = list(get_unique_pixels(img, file_name))
             # 创建 Excel 文件
             workbook = xlsxwriter.Workbook(file_name + '.xlsx')
             worksheet = workbook.add_worksheet()
-            flat_color = [c for sub_list in color_dict for c in sub_list]
-
-            # 遍历图片的每个像素点
-            # 定义块大小，例如 10x10 的像素块
-            BLOCK_SIZE = 24
-            # 遍历图片的行，按块处理
-            for block_row in range(0, height, BLOCK_SIZE):
-                for block_col in range(0, width, BLOCK_SIZE):
-                    # 用于统计块内颜色信息，这里以计算平均颜色为例
-                    r_sum, g_sum, b_sum = 0, 0, 0
-                    num_pixels = 0
-                    # 遍历块内的每个像素
-                    for row in range(block_row, min(block_row + BLOCK_SIZE, height)):
-                        for col in range(block_col, min(block_col + BLOCK_SIZE, width)):
-                            color = pixels[col, row]
-                            r_sum += color[0]
-                            g_sum += color[1]
-                            b_sum += color[2]
-                            num_pixels += 1
-                    # 计算块内平均颜色
-                    avg_color = (r_sum // num_pixels, g_sum // num_pixels, b_sum // num_pixels)
-                    # result, position = closest_color(avg_color, flat_color)
-                    result, position = find_closest_color_ciede2000(avg_color, flat_color)
-                    cell_format = workbook.add_format(
-                        {'bg_color': rgb_to_hex((result[0], result[1], result[2]))})
-                    # 将块对应的单元格区域一次性写入 Excel，这里假设使用的是 xlsxwriter 库，
-                    # 根据块的起始行列坐标和块大小来确定写入区域
-                    worksheet.write_row(block_row // BLOCK_SIZE, block_col // BLOCK_SIZE,
-                                        [str(position)] * BLOCK_SIZE * BLOCK_SIZE, cell_format)
+            worksheet.write(0, 0,  '图片色彩')
+            worksheet.write(0, 1,  'ciede算法')
+            worksheet.write(0, 2,  '欧几里得算法')
+            for row_index, p in enumerate(pixels):
+                result1, position1 = find_closest_color_ciede2000((p[0], p[1], p[2]), flat_color)
+                result2, position2 = closest_color((p[0], p[1], p[2]), flat_color)
+                cell_format = workbook.add_format(
+                    {'bg_color': rgb_to_hex((p[0], p[1], p[2]))})
+                worksheet.write(row_index + 1, 0,  f'rgb({p[0]}, {p[1]}, {p[2]})', cell_format)
+                cell_format = workbook.add_format(
+                    {'bg_color': rgb_to_hex((result1[0], result1[1], result1[2]))})
+                worksheet.write(row_index + 1, 1, f'rgb({result1[0]}, {result1[1]}, {result1[2]})', cell_format)
+                cell_format = workbook.add_format(
+                    {'bg_color': rgb_to_hex((result2[0], result2[1], result2[2]))})
+                worksheet.write(row_index + 1, 2, f'rgb({result2[0]}, {result2[1]}, {result2[2]})', cell_format)
             workbook.close()
+
+def get_unique_pixels(image: ImageFile, file_name: str):
+    """
+    获取图片中所有不重复的像素颜色值（以RGB元组形式）。
+
+    参数:
+    image: 图片文件。
+
+    返回:
+    set: 包含所有不重复像素颜色值（RGB元组）的集合。
+    """
+    # 将图片转换为numpy数组，方便处理像素数据
+    pixels = np.array(image)
+    unique_pixels = set()
+    # 获取图片的高度和宽度
+    height, width = pixels.shape[:2]
+    for row in range(height):
+        for col in range(width):
+            # 获取每个像素点的RGB颜色值，以元组形式表示
+            pixel = tuple(pixels[row, col][:3])
+            unique_pixels.add(pixel)
+    return unique_pixels
+
 
 def main():
     # most_frequent_color('./colors2png.png')
-    traverse_directory_os('./imgs')
+    # traverse_directory_os('./imgs')
+    traverse_directory_os2('./imgs')
 
 
 if __name__ == '__main__':
     main()
-
